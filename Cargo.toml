@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.2.1"
+anyhow = "1.0.66"
 dotenv = "0.15.0"
+env_logger = "0.9.1"
+log = "0.4.17"
