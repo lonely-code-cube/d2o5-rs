@@ -3,7 +3,7 @@
 ## Progress
 
 - [x] Initial Server Setup
-- [ ] User Structure
+- [x] User Structure
 - [ ] Mongodb Setup
 - [ ] User Auth (register/login/logout)
 - [ ] Setup Frontend
