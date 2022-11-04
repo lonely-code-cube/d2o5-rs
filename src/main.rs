@@ -2,6 +2,7 @@ use actix_web::{App, HttpServer};
 use log::{info, warn};
 use std::env;
 
+mod model;
 mod status;
 
 #[actix_web::main]
