@@ -1,6 +1,8 @@
 use actix_web::{web, App, HttpServer};
+use argon2::Argon2;
 use log::{info, warn};
 use std::env;
+use tera::Tera;
 
 mod database;
 mod model;
@@ -37,10 +39,17 @@ async fn main() -> std::io::Result<()> {
         .unwrap(),
     );
 
+    let hasher = Argon2::default();
+
     HttpServer::new(move || {
+        let tera = Tera::new(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
+
         App::new()
             .service(crate::status::status)
+            .service(crate::status::index)
             .app_data(db.clone())
+            .app_data(hasher.clone())
+            .app_data(web::Data::new(tera))
     })
     .bind(("127.0.0.1", port))?
     .run()
