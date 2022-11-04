@@ -1,26 +1,25 @@
+use redis::{aio::Connection, AsyncCommands, Client};
 use std::sync::Mutex;
-use std::{collections::HashMap, hash::Hash};
 
-pub struct Cache<K, D> {
-    data: Mutex<HashMap<K, D>>,
+use crate::model;
+
+pub struct Cache {
+    con: Connection,
 }
 
-impl<K: Eq + Hash, D: Clone> Cache<K, D> {
-    pub fn new() -> Self {
-        Cache {
-            data: Mutex::new(HashMap::<K, D>::new()),
-        }
+impl Cache {
+    pub async fn new(url: &String) -> anyhow::Result<Self> {
+        let x = Client::open(url.to_owned())?.get_async_connection().await?;
+        Ok(Cache { con: x })
     }
 
-    pub fn get(&self, key: &K) -> Option<D> {
-        self.data.lock().unwrap().get(&key).cloned()
-    }
-
-    pub fn insert(&mut self, key: K, value: D) -> Option<D> {
-        self.data.lock().unwrap().insert(key, value)
-    }
-
-    pub fn remove(&mut self, key: &K) -> Option<D> {
-        self.data.lock().unwrap().remove(key)
+    pub async fn set_user(&mut self, user: model::user::User) {
+        self.con
+            .hset::<&str, &String, String, ()>(
+                "users",
+                &user.username,
+                serde_json::to_string(&user).unwrap(),
+            )
+            .await;
     }
 }

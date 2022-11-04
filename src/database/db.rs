@@ -3,25 +3,25 @@ use crate::model::{self, APISafe};
 use anyhow::Context;
 use mongodb::bson::doc;
 use mongodb::{Client, Collection};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct DB {
     client: Client,
+    pub cache: Arc<Mutex<Cache>>,
     usercolletion: Collection<model::user::DBUser>,
-    usercache: Arc<Cache<String, model::user::User>>,
 }
 
 impl DB {
-    pub async fn new(url: &String) -> anyhow::Result<Self> {
-        let client = Client::with_uri_str(url)
+    pub async fn new(mongodb_url: &String, redis_url: &String) -> anyhow::Result<Self> {
+        let client = Client::with_uri_str(mongodb_url)
             .await
             .context("Could not connect to database")?;
 
         Ok(DB {
             client: client.clone(),
+            cache: Arc::new(Mutex::new(Cache::new(redis_url).await?)),
             usercolletion: client.database("d2o5").collection("users"),
-            usercache: Arc::new(Cache::new()),
         })
     }
 
@@ -44,15 +44,15 @@ impl DB {
         Ok(user)
     }
 
-    pub async fn user(&self, username: &String) -> anyhow::Result<Option<model::user::User>> {
-        let user = match self.usercache.get(username) {
-            Some(user) => Some(user.to_owned()),
-            None => match &self.fetch_user(username).await?.to_owned() {
-                Some(user) => Some(user.public()),
-                None => None,
-            },
-        };
+    // pub async fn user(&self, username: &String) -> anyhow::Result<Option<model::user::User>> {
+    //     let user = match self.cache.get(username) {
+    //         Some(user) => Some(user.to_owned()),
+    //         None => match &self.fetch_user(username).await?.to_owned() {
+    //             Some(user) => Some(user.public()),
+    //             None => None,
+    //         },
+    //     };
 
-        Ok(user)
-    }
+    //     Ok(user)
+    // }
 }

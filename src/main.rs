@@ -28,9 +28,12 @@ async fn main() -> std::io::Result<()> {
 
     info!("Connectiong to database");
     let db = web::Data::new(
-        database::db::DB::new(&env::var("MONGODB_URL").expect("MONGODB_URL must be set"))
-            .await
-            .unwrap(),
+        database::db::DB::new(
+            &env::var("MONGODB_URL").expect("MONGODB_URL must be set"),
+            &env::var("REDIS_URL").expect("REDIS_URL must be set"),
+        )
+        .await
+        .unwrap(),
     );
 
     HttpServer::new(move || {
