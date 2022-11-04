@@ -9,11 +9,11 @@ D2O5 is a forum written in rust, focused towards performence.
 - [x] Initial Server Setup
 - [x] User Structure
 - [x] Mongodb Setup
-- [x] Cache setup
+- [x] Redis Cache setup
 - [ ] User Auth (register/login/logout)
 - [x] Setup Frontend
 - [ ] User Profile Update (username/bio)
 - [ ] Password Update
-- [ ] User Avatar
+- [x] User Avatar
 - [ ] Frontend Catchup
 - [ ] Update User Avatar
