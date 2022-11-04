@@ -13,6 +13,7 @@ D2O5 is a forum written in rust, focused towards performence.
 - [ ] User Auth (register/login/logout)
 - [ ] Setup Frontend
 - [ ] User Profile Update (username/bio)
+- [ ] Password Update
 - [ ] User Avatar
 - [ ] Frontend Catchup
 - [ ] Update User Avatar

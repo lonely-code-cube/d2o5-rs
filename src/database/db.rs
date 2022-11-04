@@ -44,15 +44,21 @@ impl DB {
         Ok(user)
     }
 
-    // pub async fn user(&self, username: &String) -> anyhow::Result<Option<model::user::User>> {
-    //     let user = match self.cache.get(username) {
-    //         Some(user) => Some(user.to_owned()),
-    //         None => match &self.fetch_user(username).await?.to_owned() {
-    //             Some(user) => Some(user.public()),
-    //             None => None,
-    //         },
-    //     };
+    pub async fn user(&mut self, username: &String) -> anyhow::Result<Option<model::user::User>> {
+        let user = match self.cache.lock().unwrap().get_user(username).await {
+            Ok(user) => Some(user),
+            Err(_) => match self.fetch_user(username).await {
+                Ok(user) => match user {
+                    Some(user) => {
+                        self.cache.lock().unwrap().set_user(user.public()).await;
+                        Some(user.public())
+                    }
+                    None => None,
+                },
+                Err(_) => None,
+            },
+        };
 
-    //     Ok(user)
-    // }
+        Ok(user)
+    }
 }
