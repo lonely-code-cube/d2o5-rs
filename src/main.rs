@@ -1,10 +1,10 @@
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use log::{info, warn};
 use std::env;
 
+mod database;
 mod model;
 mod status;
-mod database;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -25,8 +25,20 @@ async fn main() -> std::io::Result<()> {
             8070
         }
     };
-    HttpServer::new(|| App::new().service(crate::status::status))
-        .bind(("127.0.0.1", port))?
-        .run()
-        .await
+
+    info!("Connectiong to database");
+    let db = web::Data::new(
+        database::db::DB::new(&env::var("MONGODB_URL").expect("MONGODB_URL must be set"))
+            .await
+            .unwrap(),
+    );
+
+    HttpServer::new(move || {
+        App::new()
+            .service(crate::status::status)
+            .app_data(db.clone())
+    })
+    .bind(("127.0.0.1", port))?
+    .run()
+    .await
 }

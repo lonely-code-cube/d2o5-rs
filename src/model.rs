@@ -1,12 +1,9 @@
-use actix_web::web::Json;
-
-trait APISafe<T> {
-    fn public(&self) -> Json<T>;
+pub trait APISafe<T> {
+    fn public(&self) -> T;
 }
 
-mod user {
+pub mod user {
     use super::APISafe;
-    use actix_web::web::Json;
     use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
     use chrono::{DateTime, Utc};
     use mongodb::bson::oid::ObjectId;
@@ -74,14 +71,14 @@ mod user {
     }
 
     impl APISafe<User> for DBUser {
-        fn public(&self) -> Json<User> {
-            Json(User {
+        fn public(&self) -> User {
+            User {
                 id: self.id.unwrap().to_string(),
                 username: self.username.to_owned(),
                 created_at: self.created_at,
                 display_name: self.display_name.to_owned(),
                 avatar_url: self.avatar_url.to_owned(),
-            })
+            }
         }
     }
 }
