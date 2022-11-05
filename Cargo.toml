@@ -24,3 +24,4 @@ rand = "0.8.5"
 
 tera = "1"
 actix-web-lab = "0.18.5"
+actix-easy-multipart = "2.1.1"

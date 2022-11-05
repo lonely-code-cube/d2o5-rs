@@ -48,7 +48,7 @@ pub mod user {
     }
 
     impl CreateUser {
-        pub fn dbuser(&self, hasher: Argon2) -> Result<DBUser, anyhow::Error> {
+        pub fn dbuser(&self, hasher: &Argon2) -> Result<DBUser, anyhow::Error> {
             let salt = SaltString::generate(&mut rand::thread_rng());
             let password_hash = hasher
                 .hash_password(self.password.as_bytes(), &salt)
@@ -60,10 +60,25 @@ pub mod user {
                 created_at: Utc::now(),
                 username: self.username.to_owned(),
                 display_name: match &self.display_name {
-                    Some(dn) => dn.to_owned(),
+                    Some(dn) => {
+                        if dn.is_empty() || dn.len() > 20 {
+                            self.username.to_owned()
+                        } else {
+                            dn.to_owned()
+                        }
+                    }
                     None => self.username.to_owned(),
                 },
-                avatar_url: self.avatar_url.to_owned(),
+                avatar_url: match &self.avatar_url {
+                    Some(url) => {
+                        if url.is_empty() {
+                            None
+                        } else {
+                            Some(url.to_owned())
+                        }
+                    }
+                    None => None,
+                },
                 password_hash: password_hash,
                 salt: salt.to_string(),
             })

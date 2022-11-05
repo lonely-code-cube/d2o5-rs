@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use argon2::Argon2;
 use log::{info, warn};
 use std::env;
@@ -8,6 +8,17 @@ mod database;
 mod model;
 mod routes;
 mod status;
+
+#[derive(Clone)]
+pub struct Hasher<'a>(Argon2<'a>);
+impl Hasher<'_> {
+    pub fn new() -> Self {
+        Hasher(Argon2::default())
+    }
+    pub fn get_hasher(&self) -> &Argon2 {
+        &self.0
+    }
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -39,17 +50,20 @@ async fn main() -> std::io::Result<()> {
         .unwrap(),
     );
 
-    let hasher = Argon2::default();
+    let hasher = Hasher::new();
 
     HttpServer::new(move || {
         let tera = Tera::new(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
 
         App::new()
-            .service(crate::status::status)
-            .service(crate::status::index)
+            .service(status::status)
+            .service(status::index)
+            .service(routes::auth::register)
+            .service(routes::auth::register_post)
             .app_data(db.clone())
-            .app_data(hasher.clone())
+            .app_data(web::Data::new(hasher.clone()))
             .app_data(web::Data::new(tera))
+            .wrap(Logger::default())
     })
     .bind(("127.0.0.1", port))?
     .run()
