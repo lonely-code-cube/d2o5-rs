@@ -1,7 +1,10 @@
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{dev::Service as _, web, App, HttpServer};
 use argon2::Argon2;
+use futures_util::future::FutureExt;
 use log::{info, warn};
+use pasetors::{keys::SymmetricKey, version4::V4};
 use std::env;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tera::Tera;
 
 mod database;
@@ -18,6 +21,12 @@ impl Hasher<'_> {
     pub fn get_hasher(&self) -> &Argon2 {
         &self.0
     }
+}
+
+pub struct AppData {
+    pub paseto_key: SymmetricKey<V4>,
+    pub accesses: AtomicUsize,
+    pub active_users: AtomicUsize,
 }
 
 #[actix_web::main]
@@ -54,16 +63,46 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let tera = Tera::new(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
+        let sk = SymmetricKey::<V4>::from(
+            env::var("PASETO_KEY")
+                .expect("PASETO_KEY not set")
+                .as_bytes(),
+        )
+        .expect("Invalid PASETO_KEY");
+        let app_data = AppData {
+            paseto_key: sk,
+            accesses: AtomicUsize::new(0),
+            active_users: AtomicUsize::new(0),
+        };
 
         App::new()
             .service(status::status)
             .service(status::index)
             .service(routes::auth::register)
             .service(routes::auth::register_post)
+            .service(routes::auth::login)
+            .service(routes::auth::login_post)
             .app_data(db.clone())
             .app_data(web::Data::new(hasher.clone()))
             .app_data(web::Data::new(tera))
-            .wrap(Logger::default())
+            .app_data(web::Data::new(app_data))
+            .wrap_fn(|req, srv| {
+                print!("{} ", req.path());
+                let app_data = req.app_data::<AppData>();
+                if app_data.is_some() {
+                    app_data.unwrap().accesses.fetch_add(1, Ordering::Relaxed);
+                }
+                srv.call(req).map(|res| {
+                    println!(
+                        "{}",
+                        match &res {
+                            Ok(a) => format!("{}", a.status()),
+                            Err(b) => format!("{:?}", b),
+                        }
+                    );
+                    res
+                })
+            })
     })
     .bind(("127.0.0.1", port))?
     .run()

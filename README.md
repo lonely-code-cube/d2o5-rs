@@ -11,7 +11,7 @@ D2O5 is a forum written in rust, focused towards performence.
 - [x] Mongodb Setup
 - [x] Redis Cache setup
 - [x] User Auth (register)
-- [ ] User Auth (login)
+- [x] User Auth (login)
 - [ ] User Auth (logout)
 - [x] Setup Frontend
 - [ ] **Verify image url/Accept files only**
