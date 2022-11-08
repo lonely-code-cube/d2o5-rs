@@ -12,9 +12,9 @@ D2O5 is a forum written in rust, focused towards performence.
 - [x] Redis Cache setup
 - [x] User Auth (register)
 - [x] User Auth (login)
-- [ ] User Auth (logout)
+- [x] User Auth (logout)
 - [x] Setup Frontend
-- [ ] **Verify image url/Accept files only**
+- [ ] **Refactor for error handling**
 - [ ] User Profile Update (username/bio)
 - [ ] Password Update
 - [x] User Avatar

@@ -83,6 +83,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::register_post)
             .service(routes::auth::login)
             .service(routes::auth::login_post)
+            .service(routes::auth::logout)
             .service(routes::auth::me)
             .app_data(db.clone())
             .app_data(web::Data::new(hasher.clone()))

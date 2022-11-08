@@ -7,7 +7,7 @@ use pasetors::{claims::ClaimsValidationRules, local, version4::V4, Local};
 use std::pin::Pin;
 
 #[derive(serde::Serialize)]
-pub struct AuthUser(Option<model::user::User>);
+pub struct AuthUser(pub Option<model::user::User>);
 
 impl AuthUser {
     fn new(user: Option<model::user::User>) -> Self {

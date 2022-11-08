@@ -153,6 +153,19 @@ pub async fn login_post(
     }
 }
 
+#[get("/logout")]
+pub async fn logout(user: AuthUser, db: web::Data<DB>) -> impl Responder {
+    match user.0 {
+        Some(user) => {
+            let _ = db.cache.lock().unwrap().remove_user(&user.username).await;
+            let mut res = HttpResponse::Ok().insert_header((LOCATION, "/")).finish();
+            let _ = res.add_removal_cookie(&Cookie::named("auth"));
+            res
+        }
+        None => HttpResponse::Unauthorized().finish(),
+    }
+}
+
 #[get("/me")]
 pub async fn me(user: AuthUser) -> impl Responder {
     HttpResponse::Ok().json(user)
