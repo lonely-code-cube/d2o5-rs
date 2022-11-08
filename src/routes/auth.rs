@@ -1,4 +1,9 @@
-use crate::{database::db::DB, model, AppData, Hasher};
+use crate::{
+    auth::AuthUser,
+    database::db::DB,
+    model::{self, APISafe},
+    AppData, Hasher,
+};
 use actix_web::{
     cookie, cookie::Cookie, error, get, http::header::LOCATION, post, web, Error, HttpResponse,
     Responder,
@@ -130,6 +135,15 @@ pub async fn login_post(
             );
             c.set_secure(true);
 
+            db.cache
+                .lock()
+                .map_err(|e| {
+                    error!("{}", e);
+                    error::ErrorInternalServerError("An unexpected error occured")
+                })?
+                .set_user(dbuser.public())
+                .await;
+
             Ok(HttpResponse::SeeOther()
                 .cookie(c)
                 .insert_header((LOCATION, "/"))
@@ -137,4 +151,9 @@ pub async fn login_post(
         }
         None => Ok(HttpResponse::NotFound().body("No such user exists")),
     }
+}
+
+#[get("/me")]
+pub async fn me(user: AuthUser) -> impl Responder {
+    HttpResponse::Ok().json(user)
 }

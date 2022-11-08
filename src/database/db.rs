@@ -7,7 +7,6 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct DB {
-    client: Client,
     pub cache: Arc<Mutex<Cache>>,
     usercolletion: Collection<model::user::DBUser>,
 }
@@ -19,7 +18,6 @@ impl DB {
             .context("Could not connect to database")?;
 
         Ok(DB {
-            client: client.clone(),
             cache: Arc::new(Mutex::new(Cache::new(redis_url).await?)),
             usercolletion: client.database("d2o5").collection("users"),
         })
@@ -44,7 +42,7 @@ impl DB {
         Ok(user)
     }
 
-    pub async fn user(&mut self, username: &String) -> anyhow::Result<Option<model::user::User>> {
+    pub async fn user(&self, username: &String) -> anyhow::Result<Option<model::user::User>> {
         let user = match self.cache.lock().unwrap().get_user(username).await {
             Ok(user) => Some(user),
             Err(_) => match self.fetch_user(username).await {

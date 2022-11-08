@@ -7,6 +7,7 @@ use std::env;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tera::Tera;
 
+mod auth;
 mod database;
 mod model;
 mod routes;
@@ -82,21 +83,22 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::register_post)
             .service(routes::auth::login)
             .service(routes::auth::login_post)
+            .service(routes::auth::me)
             .app_data(db.clone())
             .app_data(web::Data::new(hasher.clone()))
             .app_data(web::Data::new(tera))
             .app_data(web::Data::new(app_data))
             .wrap_fn(|req, srv| {
-                print!("{} ", req.path());
                 let app_data = req.app_data::<AppData>();
                 if app_data.is_some() {
                     app_data.unwrap().accesses.fetch_add(1, Ordering::Relaxed);
                 }
-                srv.call(req).map(|res| {
+                let path = req.path().to_owned();
+                srv.call(req).map(move |res| {
                     println!(
                         "{}",
                         match &res {
-                            Ok(a) => format!("{}", a.status()),
+                            Ok(a) => format!("{} {}", path, a.status()),
                             Err(b) => format!("{:?}", b),
                         }
                     );
